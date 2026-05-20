@@ -9,74 +9,6 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.data import random_split
 import torch.nn.init as init
 
-
-class PNGDataset(Dataset):
-    def __init__(self, images_dir, labels_dir, transform=None):
-        self.images_dir = images_dir
-        self.labels_dir = labels_dir
-        self.transform = transform
-
-        # Assuming file names are in corresponding order
-        self.data_files = sorted([f for f in os.listdir(images_dir) if f.endswith('.png')])
-        self.label_dirs = sorted([d for d in os.listdir(labels_dir) if os.path.isdir(os.path.join(labels_dir, d))])
-
-    def __len__(self):
-        return len(self.data_files)
-
-    def __getitem__(self, idx):
-        # Load image
-        img_name = os.path.join(self.images_dir, self.data_files[idx])
-        image = Image.open(img_name)
-        image = np.array(image).astype('float32') / 255.0
-
-        # Load labels (6 PNGs per label directory)
-        label_images = []
-        label_dir_path = os.path.join(self.labels_dir, self.label_dirs[idx])
-        for label_file in sorted(os.listdir(label_dir_path)):
-            label_path = os.path.join(label_dir_path, label_file)
-            label_image = Image.open(label_path)
-            label_images.append(label_image)
-        labels = np.stack([np.array(label).astype('float32') / 255.0 for label in label_images])
-
-        # Apply transformations - don't have any right now
-        # if self.transform:
-        #     image = self.transform(image)
-        #     label_images = [self.transform(label) for label in label_images]
-
-        image = torch.Tensor(image)
-        image = torch.unsqueeze(image, 0)
-        labels = torch.Tensor(labels)
-        return image, labels
-
-
-def get_dataloaders(images_dir, labels_dir, batch_size, val_split=0.1, test_split=0.1, seed=None, num_workers=0):
-    dataset = PNGDataset(images_dir, labels_dir)
-
-    # Split dataset into train, validation, and test sets
-    total_size = len(dataset)
-    test_size = int(test_split * total_size)
-    val_size = int(val_split * total_size)
-    train_size = total_size - test_size - val_size
-
-    print(f"Train size: {train_size}, Validation size: {val_size}, Test size: {test_size}")
-
-    if num_workers == 0:
-        persistent_workers = False
-    else:
-        persistent_workers = True
-
-    if seed:
-        torch.manual_seed(seed)
-        
-    train_dataset, test_dataset, val_dataset = random_split(dataset, [train_size, test_size, val_size])
-
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, persistent_workers=persistent_workers)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, persistent_workers=persistent_workers)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, persistent_workers=persistent_workers)
-
-    return train_loader, val_loader, test_loader
-
-
 def train_model(model, train_loader, val_loader, n_epochs, criterion, optimizer, device, save_name, save_loss_history = True, save_checkpoints = None):
     train_loss_history = []
     val_loss_history = []
@@ -141,3 +73,83 @@ def train_model(model, train_loader, val_loader, n_epochs, criterion, optimizer,
     return model, train_loss_history, val_loss_history
 
 
+def predict(model, image, device='mps'):
+    """
+    Make a prediction on a single image.
+    
+    Args:
+        model: Trained PyTorch model
+        image: Input image as tensor (C, H, W) or numpy array
+        device: Device to run on ('mps' or 'cpu')
+    
+    Returns:
+        prediction: Output as numpy array (C, H, W)
+    """
+    model.eval()
+    model.to(device)
+    
+    # Convert to tensor if numpy
+    if isinstance(image, np.ndarray):
+        image = torch.from_numpy(image).float()
+    
+    # Add batch dimension if needed
+    if image.ndim == 3:
+        image = image.unsqueeze(0)  # (1, C, H, W)
+    
+    with torch.no_grad():
+        image = image.to(device)
+        prediction = model(image)
+        prediction = prediction.cpu().numpy()
+    
+    # Remove batch dimension
+    if prediction.shape[0] == 1:
+        prediction = prediction[0]  # (C, H, W)
+    
+    return prediction
+
+
+def predict_batch(model, dataloader, device='mps', max_batches=None):
+    """
+    Make predictions on a full dataloader.
+    Args:
+        model: Trained PyTorch model
+        dataloader: DataLoader containing images
+        device: Device to run on 
+        max_batches: Maximum number of batches to predict (None = all)
+    Returns:
+        predictions: List of prediction arrays
+        targets: List of target arrays (if available)
+        inputs: List of input arrays
+    """
+    model.eval()
+    model.to(device)
+    
+    predictions = []
+    targets = []
+    inputs = []
+    
+    with torch.no_grad():
+        for i, batch in enumerate(dataloader):
+            if max_batches is not None and i >= max_batches:
+                break
+            
+            # Unpack batch
+            if len(batch) == 2:
+                imgs, tgts = batch
+                imgs = imgs.to(device)
+                tgts = tgts.to(device)
+                
+                # Predict
+                preds = model(imgs)
+                
+                # Store results
+                predictions.extend(preds.cpu().numpy())
+                targets.extend(tgts.cpu().numpy())
+                inputs.extend(imgs.cpu().numpy())
+            else:
+                imgs = batch[0].to(device)
+                preds = model(imgs)
+                predictions.extend(preds.cpu().numpy())
+                inputs.extend(imgs.cpu().numpy())
+    
+    return predictions, targets, inputs
