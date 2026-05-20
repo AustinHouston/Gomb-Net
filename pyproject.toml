@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gomb-net"
+version = "0.1.0"
+description = "Gomb-Net models and notebooks for atom finding in STEM images of moire materials."
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "ase",
+    "dask[array]",
+    "ipympl",
+    "jupyterlab",
+    "matplotlib",
+    "numpy",
+    "optuna",
+    "pillow",
+    "pyTEMlib",
+    "scikit-image",
+    "scipy",
+    "sidpy",
+    "torch",
+    "torchvision",
+]
+
+# pystemsim replaces the old DataGenSTEM simulation code. Its repository is
+# currently source-only, without pyproject.toml or setup.py, so uv cannot
+# install it as a package yet. The pystemsim runtime libraries are listed above;
+# notebooks clone https://github.com/AustinHouston/pystemsim and import from
+# that source tree.
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[tool.setuptools]
+packages = ["GombNet"]
