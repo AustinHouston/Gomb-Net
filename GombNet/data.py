@@ -362,6 +362,12 @@ def get_dataloaders(data_dir, dataset_type='npz', batch_size=8, val_split=0.1, t
     Returns:
         train_loader, val_loader, test_loader
     """
+    # Backward compatibility for older notebooks/scripts:
+    # get_dataloaders(images_dir, labels_dir, ...)
+    if dataset_type not in ['npz', 'png'] and labels_dir is None:
+        labels_dir = dataset_type
+        dataset_type = 'png'
+
     # Validate inputs
     if dataset_type not in ['npz', 'png']:
         raise ValueError(f"dataset_type must be 'npz' or 'png', got '{dataset_type}'")

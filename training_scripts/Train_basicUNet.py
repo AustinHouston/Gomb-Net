@@ -5,7 +5,7 @@ from GombNet.loss_func import GombinatorialLoss
 # Create dataloaders
 images_dir='/Users/austin/Desktop/G_dataset_256/images'
 labels_dir='/Users/austin/Desktop/G_dataset_256/labels'
-train_loader, val_loader, test_loader = get_dataloaders(images_dir, labels_dir, batch_size = 2, val_split=0.2, test_split=0.1)
+train_loader, val_loader, test_loader = get_dataloaders(images_dir, dataset_type="png", labels_dir=labels_dir, batch_size = 2, val_split=0.2, test_split=0.1)
 
 # Model Params
 input_channels = 1
