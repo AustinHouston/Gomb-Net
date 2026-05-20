@@ -9,6 +9,8 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.data import random_split
 import torch.nn.init as init
 
+from GombNet.data import get_dataloaders
+
 def train_model(model, train_loader, val_loader, n_epochs, criterion, optimizer, device, save_name, save_loss_history = True, save_checkpoints = None):
     train_loss_history = []
     val_loss_history = []

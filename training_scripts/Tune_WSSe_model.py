@@ -7,7 +7,7 @@ from GombNet.loss_func import GombinatorialLoss
 # Create dataloaders
 images_dir='/Users/austin/Desktop/WSSe_dataset/images'
 labels_dir='/Users/austin/Desktop/WSSe_dataset/labels'
-train_loader, val_loader, test_loader = get_dataloaders(images_dir, labels_dir, batch_size = 2, val_split=0.2, test_split=0.1)
+train_loader, val_loader, test_loader = get_dataloaders(images_dir, dataset_type="png", labels_dir=labels_dir, batch_size = 2, val_split=0.2, test_split=0.1)
 
 save_name = '/Users/austin/Documents/GitHub/GombNet/trained_models/WSSe_dataset_32_1024.pth'
 

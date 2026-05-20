@@ -8,7 +8,7 @@ from GombNet.loss_func import GombinatorialLoss
 # Create dataloaders
 images_dir='/Users/austin/Desktop/WSSe_dataset_8kb/images'
 labels_dir='/Users/austin/Desktop/WSSe_dataset_8kb/labels'
-train_loader, val_loader, test_loader = get_dataloaders(images_dir, labels_dir, batch_size = 8, val_split=0.2, test_split=0.1, num_workers=0)
+train_loader, val_loader, test_loader = get_dataloaders(images_dir, dataset_type="png", labels_dir=labels_dir, batch_size = 8, val_split=0.2, test_split=0.1, num_workers=0)
 
 # model_names = ['a', 'b', 'c', 'd', 'e', 'f']
 model_names = ['b', 'c', 'd', 'e', 'f']
